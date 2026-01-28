@@ -399,3 +399,48 @@ module "inspector" {
   # Member associations are NOT managed in Terraform - existing accounts
   # are enrolled via post-deployment/enroll-inspector-members.py
 }
+
+# -----------------------------------------------------------------------------
+# Alternate Contacts Module
+# Sets billing, operations, and security contacts for management and shared accounts
+# Uses Organizations API to set contacts on member accounts from management account
+# -----------------------------------------------------------------------------
+
+# Management account alternate contacts
+module "alternate_contacts_management" {
+  source = "./modules/alternate-contacts"
+  count  = var.enable_alternate_contacts && var.billing_contact != null ? 1 : 0
+
+  account_id = null # Current account (management)
+
+  enable_alternate_contacts = var.enable_alternate_contacts
+  billing_contact           = var.billing_contact
+  operations_contact        = var.operations_contact
+  security_contact          = var.security_contact
+}
+
+# Log archive account alternate contacts - only when accounts exist
+module "alternate_contacts_log_archive" {
+  source = "./modules/alternate-contacts"
+  count  = local.accounts_exist && var.enable_alternate_contacts && var.billing_contact != null ? 1 : 0
+
+  account_id = local.log_archive_account_id
+
+  enable_alternate_contacts = var.enable_alternate_contacts
+  billing_contact           = var.billing_contact
+  operations_contact        = var.operations_contact
+  security_contact          = var.security_contact
+}
+
+# Audit account alternate contacts - only when accounts exist
+module "alternate_contacts_audit" {
+  source = "./modules/alternate-contacts"
+  count  = local.accounts_exist && var.enable_alternate_contacts && var.billing_contact != null ? 1 : 0
+
+  account_id = local.audit_account_id
+
+  enable_alternate_contacts = var.enable_alternate_contacts
+  billing_contact           = var.billing_contact
+  operations_contact        = var.operations_contact
+  security_contact          = var.security_contact
+}

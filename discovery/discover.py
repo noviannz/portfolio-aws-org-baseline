@@ -1628,6 +1628,15 @@ def main():
         "securityhub_discovered_delegated_admin": discovery.get(
             "securityhub_delegated_admin", ""
         ),
+        # Alternate contacts config
+        "enable_alternate_contacts": config.get("alternate_contacts", {}).get(
+            "enable_alternate_contacts", False
+        ),
+        "billing_contact": config.get("alternate_contacts", {}).get("billing_contact"),
+        "operations_contact": config.get("alternate_contacts", {}).get(
+            "operations_contact"
+        ),
+        "security_contact": config.get("alternate_contacts", {}).get("security_contact"),
     }
 
     tfvars_path = Path("/work/terraform/bootstrap.auto.tfvars.json")
