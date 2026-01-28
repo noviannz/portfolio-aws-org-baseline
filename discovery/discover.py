@@ -1628,18 +1628,35 @@ def main():
         "securityhub_discovered_delegated_admin": discovery.get(
             "securityhub_delegated_admin", ""
         ),
-        # Alternate contacts config
-        "enable_alternate_contacts": config.get("alternate_contacts", {}).get(
-            "enable_alternate_contacts", False
-        ),
-        "billing_contact": config.get("alternate_contacts", {}).get("billing_contact"),
-        "operations_contact": config.get("alternate_contacts", {}).get(
-            "operations_contact"
-        ),
-        "security_contact": config.get("alternate_contacts", {}).get(
-            "security_contact"
-        ),
     }
+
+    # Alternate contacts config - validate if enabled
+    alternate_contacts_config = config.get("alternate_contacts", {})
+    enable_alternate_contacts = alternate_contacts_config.get(
+        "enable_alternate_contacts", False
+    )
+    billing_contact = alternate_contacts_config.get("billing_contact")
+    operations_contact = alternate_contacts_config.get("operations_contact")
+    security_contact = alternate_contacts_config.get("security_contact")
+
+    if enable_alternate_contacts:
+        missing_contacts = []
+        if not billing_contact:
+            missing_contacts.append("billing_contact")
+        if not operations_contact:
+            missing_contacts.append("operations_contact")
+        if not security_contact:
+            missing_contacts.append("security_contact")
+        if missing_contacts:
+            raise ValueError(
+                f"alternate_contacts.enable_alternate_contacts is true but the following "
+                f"contacts are missing in config.yaml: {', '.join(missing_contacts)}"
+            )
+
+    tfvars["enable_alternate_contacts"] = enable_alternate_contacts
+    tfvars["billing_contact"] = billing_contact
+    tfvars["operations_contact"] = operations_contact
+    tfvars["security_contact"] = security_contact
 
     tfvars_path = Path("/work/terraform/bootstrap.auto.tfvars.json")
     with open(tfvars_path, "w") as f:

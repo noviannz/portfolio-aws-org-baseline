@@ -406,10 +406,20 @@ module "inspector" {
 # Uses Organizations API to set contacts on member accounts from management account
 # -----------------------------------------------------------------------------
 
+# Local to check if all alternate contacts are provided
+locals {
+  alternate_contacts_valid = (
+    var.enable_alternate_contacts &&
+    var.billing_contact != null &&
+    var.operations_contact != null &&
+    var.security_contact != null
+  )
+}
+
 # Management account alternate contacts
 module "alternate_contacts_management" {
   source = "./modules/alternate-contacts"
-  count  = var.enable_alternate_contacts && var.billing_contact != null ? 1 : 0
+  count  = local.alternate_contacts_valid ? 1 : 0
 
   account_id = null # Current account (management)
 
@@ -422,7 +432,7 @@ module "alternate_contacts_management" {
 # Log archive account alternate contacts - only when accounts exist
 module "alternate_contacts_log_archive" {
   source = "./modules/alternate-contacts"
-  count  = local.accounts_exist && var.enable_alternate_contacts && var.billing_contact != null ? 1 : 0
+  count  = local.accounts_exist && local.alternate_contacts_valid ? 1 : 0
 
   account_id = local.log_archive_account_id
 
@@ -435,7 +445,7 @@ module "alternate_contacts_log_archive" {
 # Audit account alternate contacts - only when accounts exist
 module "alternate_contacts_audit" {
   source = "./modules/alternate-contacts"
-  count  = local.accounts_exist && var.enable_alternate_contacts && var.billing_contact != null ? 1 : 0
+  count  = local.accounts_exist && local.alternate_contacts_valid ? 1 : 0
 
   account_id = local.audit_account_id
 
