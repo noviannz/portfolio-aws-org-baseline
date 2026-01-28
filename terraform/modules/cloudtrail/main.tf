@@ -213,6 +213,7 @@ resource "aws_iam_role" "cloudtrail_cloudwatch" {
   })
 }
 
+# trivy:ignore:AVD-AWS-0057 Wildcard required for CloudWatch Logs - :* suffix targets log streams within the specific log group only
 resource "aws_iam_role_policy" "cloudtrail_cloudwatch" {
   name = "${var.resource_prefix}-cloudtrail-cloudwatch-policy"
   role = aws_iam_role.cloudtrail_cloudwatch.id

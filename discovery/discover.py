@@ -4,17 +4,43 @@ Discovery script for AWS Organization baseline.
 Inspects the current state of AWS Organizations and outputs variables for Terraform.
 """
 
+import importlib.util
 import json
 import os
 import subprocess
 import sys
 from pathlib import Path
+from typing import Optional, TypedDict
 
 import boto3
 import yaml
 from botocore.exceptions import ClientError
-from control_tower_regions import detect_control_tower
-from control_tower_regions import run_plan as ct_run_plan
+
+# Import local module using importlib to avoid E402 lint errors
+_ct_spec = importlib.util.spec_from_file_location(
+    "control_tower_regions", Path(__file__).parent / "control_tower_regions.py"
+)
+_ct_module = importlib.util.module_from_spec(_ct_spec)
+_ct_spec.loader.exec_module(_ct_module)
+detect_control_tower = _ct_module.detect_control_tower
+ct_run_plan = _ct_module.run_plan
+
+
+class AccountInfo(TypedDict):
+    """Type definition for AWS account information."""
+
+    id: str
+    name: str
+    email: str
+    status: str
+
+
+class SharedAccounts(TypedDict):
+    """Type definition for shared accounts discovery result."""
+
+    log_archive: Optional[AccountInfo]
+    audit: Optional[AccountInfo]
+    security_tooling: Optional[AccountInfo]
 
 
 def check_terraform_state_for_resource(resource_address: str) -> bool:
@@ -1057,7 +1083,7 @@ def fuzzy_match_account_type(account_name: str) -> str:
 
 def discover_shared_accounts(
     accounts: list, config: dict, org_client=None, security_ou_id: str = ""
-) -> dict:
+) -> SharedAccounts:
     """Identify shared accounts from config with fuzzy matching fallback.
 
     Matching strategy:
@@ -1224,16 +1250,17 @@ def main():
         shared = discover_shared_accounts(
             discovery["accounts"], config, org_client, security_ou_id
         )
-        if shared["log_archive"]:
-            discovery["shared_accounts"]["log_archive_account_id"] = shared[
-                "log_archive"
-            ]["id"]
-        if shared["audit"]:
-            discovery["shared_accounts"]["audit_account_id"] = shared["audit"]["id"]
-        if shared["security_tooling"]:
-            discovery["shared_accounts"]["security_tooling_account_id"] = shared[
-                "security_tooling"
-            ]["id"]
+        log_archive = shared["log_archive"]
+        audit = shared["audit"]
+        security_tooling = shared["security_tooling"]
+        if log_archive is not None:
+            discovery["shared_accounts"]["log_archive_account_id"] = log_archive["id"]
+        if audit is not None:
+            discovery["shared_accounts"]["audit_account_id"] = audit["id"]
+        if security_tooling is not None:
+            discovery["shared_accounts"]["security_tooling_account_id"] = (
+                security_tooling["id"]
+            )
         if not any(shared.values()):
             print("    (none identified)")
         print("")

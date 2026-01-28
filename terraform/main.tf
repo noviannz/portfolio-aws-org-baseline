@@ -236,10 +236,10 @@ module "security_hub" {
     aws.audit = aws.audit
   }
 
-  resource_prefix   = var.resource_prefix
-  primary_region    = var.primary_region
-  root_id           = module.organization.root_id
-  audit_account_id  = local.audit_account_id
+  resource_prefix  = var.resource_prefix
+  primary_region   = var.primary_region
+  root_id          = module.organization.root_id
+  audit_account_id = local.audit_account_id
 
   standards         = var.securityhub_standards
   disabled_controls = var.securityhub_disabled_controls

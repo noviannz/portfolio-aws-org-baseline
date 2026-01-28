@@ -197,4 +197,3 @@ variable "organization_config_exists" {
   type        = bool
   default     = false
 }
-
